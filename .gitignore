@@ -1,1 +1,2 @@
-/**/env
+base/__init__.py base/__pycache__ base/admin.py base/apps.py base/migrations base/models.py base/products.py base/serializers.py base/signals.py base/tests.py base/urls base/views
+backend/__init__.py backend/__pycache__ backend/asgi.py backend/env backend/settings.py backend/urls.py backend/wsgi.py

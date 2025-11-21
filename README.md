@@ -1,18 +1,47 @@
-<h1 align=center>E-Commerce Website with Django + React & Redux</h1>
-<h2 align=center>Otaku House - Anime Merchandise and Cosplay Shop</h2>
+<h1 align=center>Candies and Snacks E-Commerce Website with Django + React & Redux</h1>
 
-## ✨ [Live Link - Otaku House](https://otakuhouse.herokuapp.com/)
+## ✨ About the project
+
+This is a full-stack e-commerce web application built with Django, React, and Redux. It provides a comprehensive set of features for both customers and administrators to buy and sell candies and snacks.
 
 ### How to Run 🏃‍♀️
 
-```shell
-1 Clone This Repo
-2 cd backend
-3 python -m venv env
-4 .\env\Scripts\activate
-5 pip install -r requirements.txt 
-6 python manage.py runserver
+#### Locally
 
+```shell
+# Clone this repository
+git clone <repository-url>
+
+# Navigate to the project directory
+cd devops-course-final-project
+
+# Create a virtual environment
+python3 -m venv env
+
+# Activate the virtual environment
+source env/bin/activate
+
+# Install the dependencies
+pip install -r requirements.txt
+
+# Run the development server
+python3 manage.py runserver
+```
+
+#### With Docker
+
+```shell
+# Clone this repository
+git clone <repository-url>
+
+# Navigate to the project directory
+cd devops-course-final-project
+
+# Build the Docker images
+docker-compose build
+
+# Run the containers
+docker-compose up
 ```
 
 ### 📷 Project Screenshots
