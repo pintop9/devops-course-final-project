@@ -184,15 +184,6 @@ resource "aws_instance" "jenkins_agent" {
     sudo -u jenkins chmod 600 /home/jenkins/.ssh/authorized_keys
     sudo chown -R jenkins:jenkins /home/jenkins/.ssh
 
-    # Add master's public key to authorized_keys - this will be replaced with actual key
-    # In a real scenario, you would fetch the public key from the master or a secure location
-    # and add it here. For this "one go" setup, this is a placeholder.
-    # *** IMPORTANT: After 'terraform apply', you must manually add the public key of the Jenkins master
-    # (from /var/lib/jenkins/.ssh/id_rsa.pub on the master) to this file on the agent:
-    # sudo -u jenkins echo "<JENKINS_MASTER_PUBLIC_KEY>" >> /home/jenkins/.ssh/authorized_keys
-    # For example, after 'terraform apply', SSH into the master, run 'sudo cat /var/lib/jenkins/.ssh/id_rsa.pub'
-    # Copy the output, then SSH into the agent and run the 'sudo -u jenkins echo...' command.
-
     echo "Jenkins agent setup complete. Waiting for Jenkins master to connect..."
   EOF
 }
