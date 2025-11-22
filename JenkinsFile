@@ -36,8 +36,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        docker.build("${DOCKERHUB_REPO}/django-web", "-f Dockerfile .")
-                        docker.build("${DOCKERHUB_REPO}/django-db", "-f Dockerfile.db .")
+                        docker.build("${DOCKERHUB_REPO}/django-web", "-f Docker/Dockerfile .")
+                        docker.build("${DOCKERHUB_REPO}/django-db", "-f Docker/Dockerfile.db .")
                         currentBuild.result = 'SUCCESS'
                     } catch (Exception e) {
                         echo "Failed to build Docker images: ${e}"
