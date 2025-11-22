@@ -11,7 +11,6 @@ jenkins:
       users:
         - id: "admin"
           name: "admin"
-          password: "{AQAAAEAAAAAw+Nl6CjY2o6R7yXQGg9sQyB3q4d3J7t7m3n7p5l7k6o4r6v5s7u6w4x4a5d4e4f6g4h6i4j7d6p4r7t4u6v4w6x5f4g4h6i4j7c6e4f6g4h6i4j7b6d4e6f4g6h4i6j6f4h6j4k6l4m6n4p4r6s4t6u4v6w4x4a5d4e4f6g4h6i4j7d6p4r7t4u6v4w6x5f4g4h6i4j7c6e4f6g4h6i4j7b6d4e6f4g6h4i6j6f4h6j4k6l4m6n4p4r6s4t6u4v6w4x}" # Replace with a securely generated hash for 'admin'
           email: "admin@example.com"
 
 credentials:

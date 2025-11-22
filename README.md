@@ -34,7 +34,7 @@ docker-compose up
 
 ### Deploy to AWS with Terraform 🚀
 
-This project can be deployed to AWS Cloud using Terraform. This will provision a Jenkins master and a Jenkins agent instance.
+This project can be deployed to AWS Cloud using Terraform. This will provision a Jenkins master and a Jenkins agent instance. The Jenkins master will be **pre-configured using Jenkins Configuration as Code (CasC)**, defining plugins, credentials (placeholders), and the main pipeline job from the repository. This automates much of the initial Jenkins setup.
 
 #### Prerequisites
 
@@ -42,6 +42,10 @@ This project can be deployed to AWS Cloud using Terraform. This will provision a
 *   **AWS CLI Configured:** Configure your AWS CLI with appropriate credentials and a default region.
 *   **Terraform:** Install Terraform on your local machine.
 *   **SSH Key:** Ensure you have an SSH key named `aws_tf` in the region specified in `main.tf` (il-central-1). You can create one via the AWS EC2 console if you don't have one.
+
+#### Important Note on Jenkins URL Configuration:
+
+The `jenkins.yaml` configuration includes a placeholder for `unclassified.location.url` (e.g., `http://localhost:8080`). Since the Jenkins master's IP address is dynamically provisioned by Terraform, you will need to **manually update this Jenkins URL** after deployment via `Manage Jenkins` -> `Configure System` -> `Jenkins Location`. This ensures Jenkins generates correct links for notifications and other features.
 
 #### Deployment Steps
 
