@@ -6,27 +6,6 @@ This is a full-stack e-commerce web application built with Django, React, and Re
 
 ### How to Run 🏃‍♀️
 
-#### Locally
-
-```shell
-# Clone this repository
-git clone https://github.com/pintop9/devops-course-final-project.git
-
-# Navigate to the project directory
-cd devops-course-final-project
-
-# Create a virtual environment
-python3 -m venv env
-
-# Activate the virtual environment
-source env/bin/activate
-
-# Install the dependencies
-pip install -r requirements.txt
-
-# Run the development server
-python3 manage.py runserver
-```
 
 #### With Docker
 
