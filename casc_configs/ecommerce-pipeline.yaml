@@ -4,7 +4,7 @@
     project-type: pipeline
     parameters:
       - string: GIT_REPO_URL
-        default: "https://github.com/pintop9/ecommerce-django-react.git"
+        default: "https://github.com/pintop9/devops-course-final-project.git"
         description: "Git repository URL"
       - string: GIT_BRANCH
         default: "main"
