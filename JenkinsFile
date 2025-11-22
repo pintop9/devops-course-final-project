@@ -9,18 +9,6 @@ pipeline {
     }
 
     stages {
-        stage('Pull from GitHub') {
-            steps {
-                script {
-                    try {
-                        git branch: GIT_BRANCH, url: GIT_REPO_URL
-                    } catch (Exception e) {
-                        echo "Failed to pull from GitHub: ${e.message}"
-                        error "Stopping the build."
-                    }
-                }
-            }
-        }
 
         stage('Test Docker Login') {
             steps {
