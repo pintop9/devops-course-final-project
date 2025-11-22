@@ -145,6 +145,13 @@ resource "aws_instance" "jenkins" {
         echo 'CASC_JENKINS_CONFIG=\"/var/lib/jenkins/casc_configs/jenkins.yaml\"' | sudo tee -a /etc/default/jenkins
     fi
 
+    # Add or update JAVA_OPTS to disable the setup wizard
+    if grep -q "^JAVA_OPTS=" /etc/default/jenkins; then
+        sudo sed -i 's|^JAVA_OPTS=.*|JAVA_OPTS="-Djenkins.install.runSetupWizard=false"|' /etc/default/jenkins
+    else
+        echo 'JAVA_OPTS="-Djenkins.install.runSetupWizard=false"' | sudo tee -a /etc/default/jenkins
+    fi
+
     # Reload systemd (if service file was modified - not in this case, but good practice) and restart Jenkins
     sudo systemctl daemon-reload # Good practice
     sudo service jenkins restart
