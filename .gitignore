@@ -1,2 +1,6 @@
 base/**
 backend*
+.terraform/**
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl

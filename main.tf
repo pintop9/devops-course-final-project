@@ -13,7 +13,7 @@ provider "aws" {
   profile                  = "default"
 }
 resource "aws_ebs_volume" "jenkins_volume" {
-  availability_zone = "il-central-1c"
+  availability_zone = "il-central-1b"
   size              = 8
 }
 data "aws_vpc" "default" {
@@ -60,9 +60,9 @@ resource "aws_security_group" "jenkins_master_sg" {
   }
 }
 
-resource "aws_security_group" "jenkins_slave_sg" {
-  name_prefix = "jenkins-slave-sg-"
-  description = "Security group for Jenkins Slave"
+resource "aws_security_group" "jenkins_agent_sg" {
+  name_prefix = "jenkins-agent-sg-"
+  description = "Security group for Jenkins Agent"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
@@ -81,7 +81,7 @@ resource "aws_security_group" "jenkins_slave_sg" {
   }
 
   tags = {
-    Name = "jenkins_slave_sg"
+    Name = "jenkins_agent_sg"
   }
 }
 
@@ -92,7 +92,7 @@ resource "aws_instance" "jenkins" {
   instance_type   = "t3.micro"
   subnet_id       = data.aws_subnets.default.ids[0]
   vpc_security_group_ids = [aws_security_group.jenkins_master_sg.id]
-  availability_zone = "il-central-1c"
+  availability_zone = "il-central-1b"
   key_name      = "aws_tf"
 
   root_block_device {
@@ -147,12 +147,12 @@ resource "aws_volume_attachment" "jenkins_va" {
   instance_id = aws_instance.jenkins.id
 }
 
-resource "aws_instance" "ubuntu" {
+resource "aws_instance" "jenkins_agent" {
   ami             = "ami-07c0a4909b86650c0"
   instance_type   = "t3.micro"
   subnet_id       = data.aws_subnets.default.ids[0]
-  vpc_security_group_ids = [aws_security_group.jenkins_slave_sg.id]
-  availability_zone = "il-central-1c"
+  vpc_security_group_ids = [aws_security_group.jenkins_agent_sg.id]
+  availability_zone = "il-central-1b"
   key_name      = "aws_tf"
 
   root_block_device {
@@ -161,7 +161,7 @@ resource "aws_instance" "ubuntu" {
   }
 
   tags = {
-    Name = "my ubuntu"
+    Name = "jenkins_agent"
   }
    user_data = <<-EOF
     #!/bin/bash
@@ -188,22 +188,22 @@ resource "aws_instance" "ubuntu" {
     # In a real scenario, you would fetch the public key from the master or a secure location
     # and add it here. For this "one go" setup, this is a placeholder.
     # *** IMPORTANT: After 'terraform apply', you must manually add the public key of the Jenkins master
-    # (from /var/lib/jenkins/.ssh/id_rsa.pub on the master) to this file on the slave:
+    # (from /var/lib/jenkins/.ssh/id_rsa.pub on the master) to this file on the agent:
     # sudo -u jenkins echo "<JENKINS_MASTER_PUBLIC_KEY>" >> /home/jenkins/.ssh/authorized_keys
     # For example, after 'terraform apply', SSH into the master, run 'sudo cat /var/lib/jenkins/.ssh/id_rsa.pub'
-    # Copy the output, then SSH into the slave and run the 'sudo -u jenkins echo...' command.
+    # Copy the output, then SSH into the agent and run the 'sudo -u jenkins echo...' command.
 
-    echo "Jenkins slave setup complete. Waiting for Jenkins master to connect..."
+    echo "Jenkins agent setup complete. Waiting for Jenkins master to connect..."
   EOF
 }
-resource "aws_ebs_volume" "ubuntu_volume" {
-  availability_zone = "il-central-1c"
+resource "aws_ebs_volume" "jenkins_agent_volume" {
+  availability_zone = "il-central-1b"
   size              = 8
 }
-resource "aws_volume_attachment" "ubuntu_va" {
+resource "aws_volume_attachment" "jenkins_agent_va" {
   device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.ubuntu_volume.id
-  instance_id = aws_instance.ubuntu.id
+  volume_id   = aws_ebs_volume.jenkins_agent_volume.id
+  instance_id = aws_instance.jenkins_agent.id
 }
 
 
@@ -214,7 +214,7 @@ output "jenkins_master_public_ip" {
   value       = aws_instance.jenkins.public_ip
 }
 
-output "jenkins_slave_public_ip" {
-  description = "The public IP address of the Jenkins slave instance"
-  value       = aws_instance.ubuntu.public_ip
+output "jenkins_agent_public_ip" {
+  description = "The public IP address of the Jenkins agent instance"
+  value       = aws_instance.jenkins_agent.public_ip
 }
