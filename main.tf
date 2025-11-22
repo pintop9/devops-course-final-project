@@ -134,10 +134,11 @@ resource "aws_instance" "jenkins" {
     sudo cp /var/lib/jenkins/devops-course-final-project/casc_configs/ecommerce-pipeline.yaml /var/lib/jenkins/casc_configs/
     sudo chown -R jenkins:jenkins /var/lib/jenkins/casc_configs
 
-    # Configure Jenkins to use CasC by setting CASC_JENKINS_CONFIG
-    sudo sed -i 's/^JENKINS_ARGS=.*/JENKINS_ARGS="--webroot=\/var\/cache\/jenkins\/war --httpPort=8080 --CascConfig=\/var\/lib\/jenkins\/casc_configs\/jenkins.yaml"/' /etc/default/jenkins
+    # Configure Jenkins to use CasC by modifying the systemd service file
+    sudo sed -i 's|ExecStart=.*|ExecStart=/usr/bin/java -Djava.awt.headless=true -jar /usr/share/jenkins/jenkins.war --webroot=/var/cache/jenkins/war --httpPort=8080 --CascConfig=/var/lib/jenkins/casc_configs/jenkins.yaml --daemon|' /lib/systemd/system/jenkins.service
 
-    # Restart Jenkins to apply CasC
+    # Reload systemd and restart Jenkins to apply CasC
+    sudo systemctl daemon-reload
     sudo service jenkins restart
 
     echo "Jenkins configured with CasC."
