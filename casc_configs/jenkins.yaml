@@ -28,11 +28,11 @@ unclassified:
     url: "http://localhost:8080/" # TODO: Update with your Jenkins URL
 
 plugins:
+  - configuration-as-code@1.51 # Needed for CasC to work
   - git@5.2.0 # Specify a version
   - docker-workflow@575.v78a_129c55c82
   - htmlpublisher@1.32 # or similar
   - email-ext@2.103.1 # or similar
-  - slack@708.v26027c1a_88e0
 
 jobs:
-  - file: /var/jenkins_home/casc_jobs/ecommerce-pipeline.yaml
+  - file: /var/lib/jenkins/casc_configs/ecommerce-pipeline.yaml
