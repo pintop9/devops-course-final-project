@@ -8,8 +8,8 @@ terraform {
 }
 provider "aws" {
   region                   = "il-central-1"
-  shared_config_files      = ["/Users/user/.aws/config"]
-  shared_credentials_files = ["/Users/user/.aws/credentials"]
+  shared_config_files      = ["~/.aws/config"]
+  shared_credentials_files = ["~/.aws/credentials"]
   profile                  = "default"
 }
 resource "aws_ebs_volume" "jenkins_volume" {
@@ -27,21 +27,71 @@ data "aws_subnets" "default" {
     values = [data.aws_vpc.default.id]
   }
 }
-data "aws_security_group" "Jenkins_master" {
-  id = "sg-03e037ab416060470"
+
+resource "aws_security_group" "jenkins_master_sg" {
+  name_prefix = "jenkins-master-sg-"
+  description = "Security group for Jenkins Master"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow SSH from anywhere
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow Jenkins UI from anywhere
+  }
+
+  # Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "jenkins_master_sg"
+  }
 }
-data "aws_security_group" "ubuntu" {
-  id = "sg-05cfe8fa65a8a7ae8"
+
+resource "aws_security_group" "jenkins_slave_sg" {
+  name_prefix = "jenkins-slave-sg-"
+  description = "Security group for Jenkins Slave"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.jenkins_master_sg.id] # Allow SSH from Jenkins Master
+  }
+  
+  # Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "jenkins_slave_sg"
+  }
 }
-data "aws_security_group" "Windows" {
-  id = "sg-0602203178c4656fa"
-}
+
+
 
 resource "aws_instance" "jenkins" {
   ami             = "ami-07c0a4909b86650c0"
   instance_type   = "t3.micro"
   subnet_id       = data.aws_subnets.default.ids[0]
-  security_groups = [data.aws_security_group.Jenkins_master.id]
+  vpc_security_group_ids = [aws_security_group.jenkins_master_sg.id]
   availability_zone = "il-central-1c"
   key_name      = "aws_tf"
 
@@ -57,11 +107,10 @@ resource "aws_instance" "jenkins" {
   user_data = <<-EOF
     #!/bin/bash
 
-
     sudo apt update
-    sudo apt install -y git fontconfig openjdk-17-jre docker.io python3.10-venv
+    sudo apt install -y git fontconfig openjdk-17-jre docker.io python3.10-venv curl
 
-    echo "Java and available updates installed"
+    echo "Java, Git, Docker and Python installed"
 
     sudo wget -O /usr/share/keyrings/jenkins-keyring.asc \
       https://pkg.jenkins.io/debian/jenkins.io-2023.key
@@ -75,6 +124,19 @@ resource "aws_instance" "jenkins" {
 
     echo "Jenkins installed successfully..."
 
+    # Generate SSH key for jenkins user
+    sudo -u jenkins ssh-keygen -t rsa -N "" -f /var/lib/jenkins/.ssh/id_rsa
+    sudo cat /var/lib/jenkins/.ssh/id_rsa.pub | sudo tee -a /var/lib/jenkins/.ssh/authorized_keys
+    sudo chmod 600 /var/lib/jenkins/.ssh/authorized_keys
+    sudo chown jenkins:jenkins /var/lib/jenkins/.ssh/id_rsa /var/lib/jenkins/.ssh/id_rsa.pub /var/lib/jenkins/.ssh/authorized_keys
+    sudo service jenkins restart
+
+    echo "SSH key generated for jenkins user."
+
+    # Placeholder for Jenkins slave setup script
+    # This part would typically involve using the Jenkins API or JNLP to register a slave.
+    # For a fully automated "one go" setup, a more complex script or a Jenkins plugin
+    # would be needed. This is left as a placeholder to indicate where such logic would go.
 
   EOF
 }
@@ -89,7 +151,7 @@ resource "aws_instance" "ubuntu" {
   ami             = "ami-07c0a4909b86650c0"
   instance_type   = "t3.micro"
   subnet_id       = data.aws_subnets.default.ids[0]
-  security_groups = [data.aws_security_group.ubuntu.id]
+  vpc_security_group_ids = [aws_security_group.jenkins_slave_sg.id]
   availability_zone = "il-central-1c"
   key_name      = "aws_tf"
 
@@ -105,7 +167,33 @@ resource "aws_instance" "ubuntu" {
     #!/bin/bash
 
     sudo apt update
-    sudo apt install -y fontconfig openjdk-17-jre docker.io
+    sudo apt install -y fontconfig openjdk-17-jre docker.io python3.10-venv git
+
+    echo "Java, Docker, Python and Git installed"
+
+    # Create jenkins user if it doesn't exist
+    sudo id -u jenkins &>/dev/null || sudo useradd -m -s /bin/bash jenkins
+
+    # Allow jenkins user to run docker commands
+    sudo usermod -aG docker jenkins
+
+    # Create .ssh directory and authorized_keys file for jenkins user
+    sudo -u jenkins mkdir -p /home/jenkins/.ssh
+    sudo -u jenkins touch /home/jenkins/.ssh/authorized_keys
+    sudo -u jenkins chmod 700 /home/jenkins/.ssh
+    sudo -u jenkins chmod 600 /home/jenkins/.ssh/authorized_keys
+    sudo chown -R jenkins:jenkins /home/jenkins/.ssh
+
+    # Add master's public key to authorized_keys - this will be replaced with actual key
+    # In a real scenario, you would fetch the public key from the master or a secure location
+    # and add it here. For this "one go" setup, this is a placeholder.
+    # *** IMPORTANT: After 'terraform apply', you must manually add the public key of the Jenkins master
+    # (from /var/lib/jenkins/.ssh/id_rsa.pub on the master) to this file on the slave:
+    # sudo -u jenkins echo "<JENKINS_MASTER_PUBLIC_KEY>" >> /home/jenkins/.ssh/authorized_keys
+    # For example, after 'terraform apply', SSH into the master, run 'sudo cat /var/lib/jenkins/.ssh/id_rsa.pub'
+    # Copy the output, then SSH into the slave and run the 'sudo -u jenkins echo...' command.
+
+    echo "Jenkins slave setup complete. Waiting for Jenkins master to connect..."
   EOF
 }
 resource "aws_ebs_volume" "ubuntu_volume" {
@@ -117,57 +205,16 @@ resource "aws_volume_attachment" "ubuntu_va" {
   volume_id   = aws_ebs_volume.ubuntu_volume.id
   instance_id = aws_instance.ubuntu.id
 }
-resource "aws_instance" "windows" {
-  ami             = "ami-0d02677ab01fe699d"
-  instance_type   = "t3.micro"
-  subnet_id       = data.aws_subnets.default.ids[0]
-  security_groups = [data.aws_security_group.Windows.id]
-  availability_zone = "il-central-1c"
-  key_name      = "aws_tf"
 
-  root_block_device {
-    volume_size           = 30
-    delete_on_termination = true 
-  }
 
-  tags = {
-    Name = "my windows"
-  }
-  
-  user_data = <<-EOF
-    <powershell>
-    # Update the system
-    Start-Transcript -Path "C:\install.log"
-    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-    Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
-    Install-Module -Name PowerShellGet -Force -AllowClobber
-    Install-Module -Name PackageManagement -Force -AllowClobber
 
-    # Install Chocolatey
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-    # Ensure Chocolatey is in the path
-    $env:Path += ";$($env:ALLUSERSPROFILE)\chocolatey\bin"
-
-    # Use Chocolatey to install packages
-    choco install openjdk17 -y
-    
-    Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/install-docker-ce.ps1" -o install-docker-ce.ps1
-    .\install-docker-ce.ps1
-    Stop-Transcript
-    </powershell>
-  EOF
-
+output "jenkins_master_public_ip" {
+  description = "The public IP address of the Jenkins master instance"
+  value       = aws_instance.jenkins.public_ip
 }
 
-resource "aws_ebs_volume" "windows_volume" {
-  availability_zone = "il-central-1c"
-  size              = 30
-}
-resource "aws_volume_attachment" "windows_va" {
-  device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.windows_volume.id
-  instance_id = aws_instance.windows.id
+output "jenkins_slave_public_ip" {
+  description = "The public IP address of the Jenkins slave instance"
+  value       = aws_instance.ubuntu.public_ip
 }

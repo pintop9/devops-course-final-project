@@ -37,12 +37,82 @@ git clone <repository-url>
 # Navigate to the project directory
 cd devops-course-final-project
 
-# Build the Docker images
-docker-compose build
 
-# Run the containers
+# Run the containers and build the images in one command
 docker-compose up
 ```
+
+### Deploy to AWS with Terraform 🚀
+
+This project can be deployed to AWS Cloud using Terraform. This will provision a Jenkins master and a Jenkins slave instance.
+
+#### Prerequisites
+
+*   **AWS Account:** Ensure you have an active AWS account.
+*   **AWS CLI Configured:** Configure your AWS CLI with appropriate credentials and a default region.
+*   **Terraform:** Install Terraform on your local machine.
+*   **SSH Key:** Ensure you have an SSH key named `aws_tf` in the region specified in `main.tf` (il-central-1c). You can create one via the AWS EC2 console if you don't have one.
+
+#### Deployment Steps
+
+1.  **Initialize Terraform:**
+    Navigate to the root of the project where `main.tf` is located and initialize Terraform.
+    ```bash
+    terraform init
+    ```
+
+2.  **Review the Plan (Optional but Recommended):**
+    See what Terraform will provision before actually creating resources.
+    ```bash
+    terraform plan
+    ```
+
+3.  **Apply the Configuration:**
+    Execute the Terraform configuration to provision the AWS resources.
+    ```bash
+    terraform apply --auto-approve
+    ```
+    This will output the public IP addresses of the Jenkins master and slave. Make a note of them.
+
+#### Post-Deployment Configuration
+
+After Terraform successfully provisions the instances, you need to perform a few manual steps to connect the Jenkins master and slave:
+
+1.  **Retrieve Jenkins Master's Public SSH Key:**
+    SSH into the Jenkins master instance (using the `aws_tf` key and its public IP) and retrieve the public key for the `jenkins` user:
+    ```bash
+    sudo cat /var/lib/jenkins/.ssh/id_rsa.pub
+    ```
+    Copy the entire output (it starts with `ssh-rsa ...`).
+
+2.  **Add Master's Public Key to Slave:**
+    SSH into the Ubuntu slave instance (using the `aws_tf` key and its public IP) and add the retrieved public key to the `/home/jenkins/.ssh/authorized_keys` file for the `jenkins` user:
+    ```bash
+    sudo -u jenkins echo "<JENKINS_MASTER_PUBLIC_KEY>" >> /home/jenkins/.ssh/authorized_keys
+    ```
+    Replace `<JENKINS_MASTER_PUBLIC_KEY>` with the actual public key you copied from the master.
+
+3.  **Access Jenkins UI and Configure Slave:**
+    *   Open your web browser and navigate to `http://<JENKINS_MASTER_PUBLIC_IP>:8080` (replace `<JENKINS_MASTER_PUBLIC_IP>` with the actual IP).
+    *   Follow the Jenkins setup wizard. You will need to get the initial admin password from the master instance's logs.
+    *   Once Jenkins is set up, go to "Manage Jenkins" -> "Nodes" -> "New Node".
+    *   Create a new permanent agent.
+    *   Configure the node with the following:
+        *   **Host:** The public IP of your Ubuntu slave instance.
+        *   **Credentials:** Add new SSH credentials.
+            *   **Scope:** System
+            *   **ID:** (choose a unique ID, e.g., `jenkins-slave-ssh-key`)
+            *   **Description:** (e.g., `SSH key for Jenkins slave`)
+            *   **Username:** `jenkins`
+            *   **From the Jenkins master, get the private key by running:**
+                ```bash
+                sudo cat /var/lib/jenkins/.ssh/id_rsa
+                ```
+                Paste the entire content of the private key into the "Private Key" field in Jenkins.
+        *   **Host Key Verification Strategy:** Select "Non verifying Verification Strategy" (for simplicity in a development environment, but not recommended for production).
+        *   **Launch method:** Launch agent via SSH.
+        *   **Remote root directory:** `/home/jenkins`
+    *   Save the configuration. Jenkins master should now connect to the slave.
 
 ### 📷 Project Screenshots
 
