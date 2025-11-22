@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO_URL = 'https://github.com/pintop9/ecommerce-django-react.git'
+        GIT_REPO_URL = 'https://github.com/pintop9/devops-course-final-project.git'
         GIT_BRANCH = 'main'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials-id')
         DOCKERHUB_REPO = 'pintop9'
