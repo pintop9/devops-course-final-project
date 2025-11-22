@@ -108,7 +108,7 @@ resource "aws_instance" "jenkins" {
     #!/bin/bash
 
     sudo apt update
-    sudo apt install -y git fontconfig openjdk-21-jre 
+    sudo apt install -y git fontconfig openjdk-21-jre docker.io 
 
     echo "Java, Git, and Python installed"
 
@@ -124,19 +124,23 @@ resource "aws_instance" "jenkins" {
 
     echo "Jenkins installed successfully..."
 
-    # Generate SSH key for jenkins user
-    sudo -u jenkins ssh-keygen -t rsa -N "" -f /var/lib/jenkins/.ssh/id_rsa
-    sudo cat /var/lib/jenkins/.ssh/id_rsa.pub | sudo tee -a /var/lib/jenkins/.ssh/authorized_keys
-    sudo chmod 600 /var/lib/jenkins/.ssh/authorized_keys
-    sudo chown jenkins:jenkins /var/lib/jenkins/.ssh/id_rsa /var/lib/jenkins/.ssh/id_rsa.pub /var/lib/jenkins/.ssh/authorized_keys
+    # Clone the project repository for CasC configuration
+    sudo git clone https://github.com/pintop9/devops-course-final-project.git /var/lib/jenkins/devops-course-final-project
+    sudo chown -R jenkins:jenkins /var/lib/jenkins/devops-course-final-project
+
+    # Create directory for CasC config and copy files
+    sudo mkdir -p /var/lib/jenkins/casc_configs
+    sudo cp /var/lib/jenkins/devops-course-final-project/casc_configs/jenkins.yaml /var/lib/jenkins/casc_configs/
+    sudo cp /var/lib/jenkins/devops-course-final-project/casc_configs/ecommerce-pipeline.yaml /var/lib/jenkins/casc_configs/
+    sudo chown -R jenkins:jenkins /var/lib/jenkins/casc_configs
+
+    # Configure Jenkins to use CasC by setting CASC_JENKINS_CONFIG
+    sudo sed -i 's/^JENKINS_ARGS=.*/JENKINS_ARGS="--webroot=\/var\/cache\/jenkins\/war --httpPort=$HTTP_PORT --CascConfig=\/var\/lib\/jenkins\/casc_configs\/jenkins.yaml"/' /etc/default/jenkins
+
+    # Restart Jenkins to apply CasC
     sudo service jenkins restart
 
-    echo "SSH key generated for jenkins user."
-
-    # Placeholder for Jenkins slave setup script
-    # This part would typically involve using the Jenkins API or JNLP to register a slave.
-    # For a fully automated "one go" setup, a more complex script or a Jenkins plugin
-    # would be needed. This is left as a placeholder to indicate where such logic would go.
+    echo "Jenkins configured with CasC."
 
   EOF
 }

@@ -113,6 +113,9 @@ After Terraform successfully provisions the instances, you need to perform a few
         *   **Remote root directory:** `/home/jenkins`
     *   Save the configuration. Jenkins master should now connect to the agent.
 
+4.  **CasC Configuration Adjustments (if needed):**
+    While Jenkins is pre-configured with CasC, you may need to SSH into the master instance (using your `aws_tf` key) to inspect or manually adjust the `jenkins.yaml` or related configuration files located at `/var/lib/jenkins/casc_configs/` if issues arise or further customizations are required. Remember to restart the Jenkins service (`sudo systemctl restart jenkins`) after any manual changes for them to take effect.
+
 #### Security Warning for CasC Configuration
 
 **IMPORTANT:** The `casc_configs/jenkins.yaml` file, especially when containing sensitive information like Docker Hub credentials (e.g., `YOUR_DOCKERHUB_USERNAME`, `YOUR_DOCKERHUB_PASSWORD`) or plaintext admin passwords, should **NEVER be committed directly to a public version control system (like Git) in plaintext.**
