@@ -6,6 +6,7 @@ This is a full-stack e-commerce web application built with Django, React, and Re
 
 ### How to Run 🏃‍♀️
 
+This application relies on a PostgreSQL database. For local development, it is recommended to use Docker to run the application, as direct local execution of the Django backend without a containerized database is not supported.
 
 #### With Docker
 
@@ -20,6 +21,16 @@ cd devops-course-final-project
 # Run the containers and build the images in one command
 docker-compose up
 ```
+
+### 🛠️ Technologies Used
+
+*   **Backend:** Django, Django REST Framework
+*   **Frontend:** React, Redux
+*   **Database:** PostgreSQL
+*   **Containerization:** Docker
+*   **Cloud Provider:** AWS
+*   **Infrastructure as Code:** Terraform
+*   **CI/CD:** Jenkins
 
 ### Deploy to AWS with Terraform 🚀
 
@@ -97,6 +108,13 @@ After Terraform successfully provisions the instances, you need to perform a few
         *   **Launch method:** Launch agent via SSH.
         *   **Remote root directory:** `/home/jenkins`
     *   Save the configuration. Jenkins master should now connect to the agent.
+
+### 🚀 Deployment Types
+
+This project supports the following deployment strategies:
+
+*   **Local Development (Dockerized):** For local development and testing, the application can be run using Docker Compose, which sets up the Django backend, React frontend, and PostgreSQL database in isolated containers.
+*   **AWS Cloud (CI/CD):** The application can be deployed to AWS using Terraform for infrastructure provisioning and Jenkins for continuous integration and continuous delivery. This setup automates the build, test, and deployment processes.
 
 ### 📷 Project Screenshots
 
