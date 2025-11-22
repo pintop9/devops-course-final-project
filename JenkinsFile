@@ -36,8 +36,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        docker.build("${DOCKERHUB_REPO}/django-web", "-f Docker/Dockerfile .")
-                        docker.build("${DOCKERHUB_REPO}/django-db", "-f Docker/Dockerfile.db .")
+                        docker-compose build
                         currentBuild.result = 'SUCCESS'
                     } catch (Exception e) {
                         echo "Failed to build Docker images: ${e}"
@@ -61,6 +60,25 @@ pipeline {
                         currentBuild.result = 'SUCCESS'
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Images') {
+            when {
+                expression { currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    try {
+                        sh 'docker-compose push'
+                        echo "Docker images pushed to Docker Hub."
+                        currentBuild.result = 'SUCCESS'
+                    } catch (Exception e) {
+                        echo "Failed to push Docker images: ${e}"
+                        currentBuild.result = 'FAILURE'
+                        throw e
                     }
                 }
             }
@@ -96,11 +114,6 @@ pipeline {
                             to: 'bitradingu@gmail.com',
                             mimeType: 'text/html'
                         )
-                        slackSend(
-                            channel: '#ci-cd',
-                            username: 'jenkins',
-                            message: "The build status is ${currentBuild.currentResult}, on project ${env.JOB_NAME}. Find the test report at this URL: ${BUILD_URL}Django_20Report/"
-                        )
                     } else if (currentBuild.result == 'SUCCESS') {
                         echo "Build succeeded. Notify developers."
                         emailext(
@@ -110,11 +123,6 @@ pipeline {
                             subject: "Successful build/job ${env.JOB_NAME} - ${env.BUILD_NUMBER} from Jenkins",
                             to: 'bitradingu@gmail.com',
                             mimeType: 'text/html'
-                        )
-                        slackSend(
-                            channel: '#ci-cd',
-                            username: 'jenkins',
-                            message: "The build was successful for project ${env.JOB_NAME}."
                         )
                     }
                 }
@@ -128,12 +136,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    python3 -m venv env
-                    . backend/env/bin/activate
-                    docker rm -f django-web django-db || true
-                    docker run -d --name django-db -p 5432:5432 ${DOCKERHUB_REPO}/django-db
-                    sleep 20
-                    docker run -d --name django-web -p 7000:7000 ${DOCKERHUB_REPO}/django-web
+                    docker-compose down --remove-orphans || true
+                    docker-compose up -d
                     '''
                 }
             }

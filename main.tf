@@ -108,9 +108,9 @@ resource "aws_instance" "jenkins" {
     #!/bin/bash
 
     sudo apt update
-    sudo apt install -y git fontconfig openjdk-17-jre docker.io python3.10-venv curl
+    sudo apt install -y git fontconfig openjdk-21-jre 
 
-    echo "Java, Git, Docker and Python installed"
+    echo "Java, Git, and Python installed"
 
     sudo wget -O /usr/share/keyrings/jenkins-keyring.asc \
       https://pkg.jenkins.io/debian/jenkins.io-2023.key
@@ -167,9 +167,15 @@ resource "aws_instance" "jenkins_agent" {
     #!/bin/bash
 
     sudo apt update
-    sudo apt install -y fontconfig openjdk-17-jre docker.io python3.10-venv git
+    sudo apt install -y fontconfig openjdk-21-jre docker.io python3.11-venv git
 
     echo "Java, Docker, Python and Git installed"
+
+    # Install Docker Compose
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    echo "Docker Compose installed"
 
     # Create jenkins user if it doesn't exist
     sudo id -u jenkins &>/dev/null || sudo useradd -m -s /bin/bash jenkins

@@ -1,0 +1,21 @@
+- job:
+    name: "ecommerce-pipeline"
+    description: "CI/CD Pipeline for Candies and Snacks E-Commerce project"
+    project-type: pipeline
+    parameters:
+      - string: GIT_REPO_URL
+        default: "https://github.com/pintop9/ecommerce-django-react.git"
+        description: "Git repository URL"
+      - string: GIT_BRANCH
+        default: "main"
+        description: "Git branch to build"
+    definition:
+      scm:
+        git:
+          url: "${GIT_REPO_URL}"
+          branches:
+            - "${GIT_BRANCH}"
+          extensions:
+            - cleanAfterCheckout()
+      scriptPath: "JenkinsFile"
+      lightweight: true
