@@ -135,7 +135,7 @@ resource "aws_instance" "jenkins" {
     sudo chown -R jenkins:jenkins /var/lib/jenkins/casc_configs
 
     # Configure Jenkins to use CasC by setting CASC_JENKINS_CONFIG
-    sudo sed -i 's/^JENKINS_ARGS=.*/JENKINS_ARGS="--webroot=\/var\/cache\/jenkins\/war --httpPort=$HTTP_PORT --CascConfig=\/var\/lib\/jenkins\/casc_configs\/jenkins.yaml"/' /etc/default/jenkins
+    sudo sed -i 's/^JENKINS_ARGS=.*/JENKINS_ARGS="--webroot=\/var\/cache\/jenkins\/war --httpPort=8080 --CascConfig=\/var\/lib\/jenkins\/casc_configs\/jenkins.yaml"/' /etc/default/jenkins
 
     # Restart Jenkins to apply CasC
     sudo service jenkins restart
